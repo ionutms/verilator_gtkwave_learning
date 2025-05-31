@@ -34,7 +34,19 @@ RUN apt-get update && apt-get install -y \
     yaru-theme-icon \
     fonts-ubuntu \
     gnome-themes-extra \
+    verilator \
+    gtkwave \
+    stress \
+    htop \
     && apt-get clean
+
+# Add Microsoft GPG key and repository for VS Code
+RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg && \
+    install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/ && \
+    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
+
+# Update package list and install VS Code
+RUN apt-get update && apt-get install -y code && apt-get clean
 
 # Set up XFCE to use Yaru theme and Ubuntu fonts
 RUN mkdir -p /root/.config/xfce4/xfconf/xfce-perchannel-xml && \
