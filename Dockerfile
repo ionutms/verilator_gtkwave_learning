@@ -48,8 +48,13 @@ RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor 
 # Update package list and install VS Code
 RUN apt-get update && apt-get install -y code && apt-get clean
 
-# Set up XFCE to use Yaru theme and Ubuntu fonts
-RUN mkdir -p /root/.config/xfce4/xfconf/xfce-perchannel-xml && \
+# Create a non-root user
+RUN useradd -m -s /bin/bash -G sudo developer && \
+    echo "developer:password" | chpasswd && \
+    echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Set up XFCE configuration for the developer user
+RUN mkdir -p /home/developer/.config/xfce4/xfconf/xfce-perchannel-xml && \
     echo '<?xml version="1.0" encoding="UTF-8"?>\n\
 <channel name="xsettings" version="1.0">\n\
   <property name="Net" type="empty">\n\
@@ -57,44 +62,72 @@ RUN mkdir -p /root/.config/xfce4/xfconf/xfce-perchannel-xml && \
     <property name="IconThemeName" type="string" value="Yaru"/>\n\
     <property name="FontName" type="string" value="Ubuntu 11"/>\n\
   </property>\n\
-</channel>' > /root/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml && \
+</channel>' > /home/developer/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml && \
     echo '<?xml version="1.0" encoding="UTF-8"?>\n\
 <channel name="xfwm4" version="1.0">\n\
   <property name="general" type="empty">\n\
     <property name="theme" type="string" value="Yaru"/>\n\
   </property>\n\
-</channel>' > /root/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
+</channel>' > /home/developer/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml && \
+    chown -R developer:developer /home/developer/.config
+
+# Create VNC directory and set up startup script
+RUN mkdir -p /home/developer/.vnc && \
+    chown developer:developer /home/developer/.vnc
 
 # Set up startup script
-RUN mkdir -p /root/.vnc && \
-echo "#!/bin/bash\n\
-# Set VNC password\n\
-mkdir -p /root/.vnc\n\
-echo 'password' | vncpasswd -f > /root/.vnc/passwd\n\
-chmod 600 /root/.vnc/passwd\n\
+RUN echo "#!/bin/bash\n\
+# Switch to developer user and set up environment\n\
+export USER=developer\n\
+export HOME=/home/developer\n\
+export DISPLAY=:1\n\
+export NO_AT_BRIDGE=1\n\
+export ELECTRON_DISABLE_SECURITY_WARNINGS=true\n\
+\n\
+# Set VNC password as developer user\n\
+su - developer -c '\n\
+mkdir -p /home/developer/.vnc\n\
+echo \"password\" | vncpasswd -f > /home/developer/.vnc/passwd\n\
+chmod 600 /home/developer/.vnc/passwd\n\
 \n\
 # Create proper xstartup script\n\
-cat > /root/.vnc/xstartup << 'EOL'\n\
+cat > /home/developer/.vnc/xstartup << \"EOL\"\n\
 #!/bin/sh\n\
 # Start up the standard system desktop\n\
 unset SESSION_MANAGER\n\
 unset DBUS_SESSION_BUS_ADDRESS\n\
 \n\
-/usr/bin/startxfce4\n\
+export DISPLAY=:1\n\
+export NO_AT_BRIDGE=1\n\
+export ELECTRON_DISABLE_SECURITY_WARNINGS=true\n\
 \n\
-[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup\n\
-[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources\n\
+# Start D-Bus session\n\
+eval \$(dbus-launch --sh-syntax --exit-with-session)\n\
+\n\
+# Start XFCE4\n\
+/usr/bin/startxfce4 &\n\
+\n\
+# Keep session alive\n\
+wait\n\
 EOL\n\
 \n\
-chmod +x /root/.vnc/xstartup\n\
+chmod +x /home/developer/.vnc/xstartup\n\
 \n\
-# Start VNC server\n\
+# Start VNC server as developer user\n\
 vncserver :1 -geometry 1024x600 -depth 32 -SecurityTypes VncAuth -localhost no\n\
+'\n\
 \n\
 # Keep the script running\n\
 tail -f /dev/null\n\
 " > /usr/local/bin/start-vnc.sh && \
 chmod +x /usr/local/bin/start-vnc.sh
+
+# Create a workspace directory for the developer user
+RUN mkdir -p /home/developer/workspace && \
+    chown -R developer:developer /home/developer/workspace
+
+# Set working directory
+WORKDIR /home/developer
 
 # Expose VNC port
 EXPOSE 5901
