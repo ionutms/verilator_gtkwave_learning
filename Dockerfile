@@ -38,6 +38,13 @@ RUN apt-get update && apt-get install -y \
     gtkwave \
     stress \
     htop \
+    python3 \
+    python3-pip \
+    python3-numpy \
+    python3-websockify \
+    net-tools \
+    xauth \
+    unzip \
     && apt-get clean
 
 # Add Microsoft GPG key and repository for VS Code
@@ -47,6 +54,12 @@ RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor 
 
 # Update package list and install VS Code
 RUN apt-get update && apt-get install -y code && apt-get clean
+
+# Install noVNC and websockify
+RUN cd /opt && \
+    git clone https://github.com/novnc/noVNC.git && \
+    git clone https://github.com/novnc/websockify.git && \
+    ln -sf /opt/noVNC/vnc.html /opt/noVNC/index.html
 
 # Create a non-root user
 RUN useradd -m -s /bin/bash -G sudo developer && \
@@ -75,7 +88,7 @@ RUN mkdir -p /home/developer/.config/xfce4/xfconf/xfce-perchannel-xml && \
 RUN mkdir -p /home/developer/.vnc && \
     chown developer:developer /home/developer/.vnc
 
-# Set up startup script
+# Set up startup script with noVNC support
 RUN echo "#!/bin/bash\n\
 # Switch to developer user and set up environment\n\
 export USER=developer\n\
@@ -89,6 +102,10 @@ su - developer -c '\n\
 mkdir -p /home/developer/.vnc\n\
 echo \"password\" | vncpasswd -f > /home/developer/.vnc/passwd\n\
 chmod 600 /home/developer/.vnc/passwd\n\
+\n\
+# Create .Xauthority file to fix xauth warning\n\
+touch /home/developer/.Xauthority\n\
+chmod 600 /home/developer/.Xauthority\n\
 \n\
 # Create proper xstartup script\n\
 cat > /home/developer/.vnc/xstartup << \"EOL\"\n\
@@ -117,6 +134,29 @@ chmod +x /home/developer/.vnc/xstartup\n\
 vncserver :1 -geometry 1024x600 -depth 32 -SecurityTypes VncAuth -localhost no\n\
 '\n\
 \n\
+# Wait a moment for VNC server to start\n\
+sleep 5\n\
+\n\
+# Start noVNC web server in background - FIXED: Use correct websockify syntax\n\
+echo \"Starting noVNC web server...\"\n\
+cd /opt/noVNC && /usr/bin/websockify --web . 6080 localhost:5901 &\n\
+\n\
+# Wait for websockify to start\n\
+sleep 2\n\
+\n\
+echo \"Services started:\"\n\
+echo \"  VNC Server: localhost:5901 (password: password)\"\n\
+echo \"  noVNC Web:  http://localhost:6080/vnc.html\"\n\
+echo \"  Connect to noVNC using password: password\"\n\
+\n\
+# Show process status for debugging\n\
+echo \"Active processes:\"\n\
+ps aux | grep -E 'vnc|websockify' | grep -v grep\n\
+\n\
+# Show listening ports for debugging\n\
+echo \"Listening ports:\"\n\
+netstat -tlnp 2>/dev/null | grep -E ':590[0-9]|:608[0-9]' || ss -tlnp | grep -E ':590[0-9]|:608[0-9]' || echo \"Port check tools not available\"\n\
+\n\
 # Keep the script running\n\
 tail -f /dev/null\n\
 " > /usr/local/bin/start-vnc.sh && \
@@ -129,8 +169,8 @@ RUN mkdir -p /home/developer/workspace && \
 # Set working directory
 WORKDIR /home/developer
 
-# Expose VNC port
-EXPOSE 5901
+# Expose VNC and noVNC ports
+EXPOSE 5901 6080
 
 # Start the VNC server
 CMD ["/usr/local/bin/start-vnc.sh"]
