@@ -15,7 +15,7 @@ RUN add-apt-repository ppa:mozillateam/ppa -y
 # Set Firefox PPA priority to avoid Snap version
 RUN echo 'Package: firefox*\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001' > /etc/apt/preferences.d/mozilla-firefox
 
-# Update and install remaining packages
+# Update and install remaining packages including locales
 RUN apt-get update && apt-get install -y \
     xfce4 \
     xfce4-goodies \
@@ -45,7 +45,17 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     xauth \
     unzip \
+    locales \
     && apt-get clean
+
+# Configure locales to fix Perl warnings
+RUN locale-gen en_US.UTF-8 && \
+    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+# Set locale environment variables
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LANGUAGE=en_US:en
 
 # Add Microsoft GPG key and repository for VS Code
 RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg && \
