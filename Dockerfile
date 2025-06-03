@@ -35,7 +35,6 @@ RUN apt-get update && apt-get install -y \
     fonts-ubuntu \
     gnome-themes-extra \
     verilator \
-    gtkwave \
     stress \
     htop \
     python3 \
