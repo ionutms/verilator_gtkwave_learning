@@ -1,10 +1,10 @@
-# Run the simulation
+# # Compile
 
 ```
 verilator --binary test.sv tb.sv --top tb
 ```
 
-# Check the result
+# Run the executable
 
 ```
 ./obj_dir/Vtb
