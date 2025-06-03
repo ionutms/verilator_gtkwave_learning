@@ -24,12 +24,11 @@ docker rm ubuntu-desktop
 ```
 docker run -d --name ubuntu-desktop -p 5901:5901 -p 6080:6080 --cpus="4.0" --memory="8g" --memory-swap="12g" --shm-size="2g" ubuntu-desktop
 ```
-```
 
 # Run with more allocated resources and an attached volume
 
 ```
-docker run -d --name ubuntu-desktop -p 5901:5901 -p 6080:6080 --cpus="4.0" --memory="8g" --memory-swap="12g" --shm-size="2g" -v "C:\Users\<Username>\<Path>\<To>\<source>:/<path>/<to>/<destination>/<directory>" ubuntu-desktop
+docker run -d --name ubuntu-desktop -p 5901:5901 -p 6080:6080 --cpus="4.0" --memory="8g" --memory-swap="12g" --shm-size="2g" -v ${PWD}:/home/developer/Desktop/systemverilog_learning ubuntu-desktop
 ```
 
 # Build the GTKWave docker container
