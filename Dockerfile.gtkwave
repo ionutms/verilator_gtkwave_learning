@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     fontconfig \
     libgtk-3-0 \
     libglib2.0-0 \
+    dbus-x11 \
+    dconf-service \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for security
@@ -30,5 +32,5 @@ WORKDIR /home/gtkuser
 # Set the display environment variable (will be overridden by docker run)
 ENV DISPLAY=:0
 
-# Default command - launches GTKWave
-CMD ["gtkwave"]
+# Initialize D-Bus and start GTKWave
+CMD ["sh", "-c", "dbus-launch --exit-with-session gtkwave"]
