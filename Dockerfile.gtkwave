@@ -1,0 +1,34 @@
+# Use Ubuntu as base image
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package list and install required packages
+RUN apt-get update && apt-get install -y \
+    gtkwave \
+    x11-apps \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
+    libasound2 \
+    fontconfig \
+    libgtk-3-0 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user for security
+RUN useradd -m -s /bin/bash gtkuser
+
+# Switch to non-root user
+USER gtkuser
+WORKDIR /home/gtkuser
+
+# Set the display environment variable (will be overridden by docker run)
+ENV DISPLAY=:0
+
+# Default command - launches GTKWave
+CMD ["gtkwave"]

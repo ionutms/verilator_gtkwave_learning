@@ -27,6 +27,17 @@ docker run -d --name ubuntu-desktop -p 5901:5901 -p 6080:6080 --cpus="4.0" --mem
 ```
 
 # Run with more allocated resources and an attached volume
+
 ```
 docker run -d --name ubuntu-desktop -p 5901:5901 -p 6080:6080 --cpus="4.0" --memory="8g" --memory-swap="12g" --shm-size="2g" -v "C:\Users\<Username>\<Path>\<To>\<source>:/<path>/<to>/<destination>/<directory>" ubuntu-desktop
+```
+
+# Build the GTKWave docker container
+```
+docker build -f Dockerfile.gtkwave -t gtkwave-gui .
+```
+
+# Run the GTKWave docker container
+```
+docker run -it --rm -e DISPLAY=host.docker.internal:0.0 -v ${PWD}:/home/gtkuser/workspace gtkwave-gui
 ```
