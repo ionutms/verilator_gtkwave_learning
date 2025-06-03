@@ -57,14 +57,6 @@ ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 
-# Add Microsoft GPG key and repository for VS Code
-RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg && \
-    install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/ && \
-    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
-
-# Update package list and install VS Code
-RUN apt-get update && apt-get install -y code && apt-get clean
-
 # Install noVNC and websockify
 RUN cd /opt && \
     git clone https://github.com/novnc/noVNC.git && \
@@ -105,7 +97,6 @@ export USER=developer\n\
 export HOME=/home/developer\n\
 export DISPLAY=:1\n\
 export NO_AT_BRIDGE=1\n\
-export ELECTRON_DISABLE_SECURITY_WARNINGS=true\n\
 \n\
 # Set VNC password as developer user\n\
 su - developer -c '\n\
@@ -126,7 +117,6 @@ unset DBUS_SESSION_BUS_ADDRESS\n\
 \n\
 export DISPLAY=:1\n\
 export NO_AT_BRIDGE=1\n\
-export ELECTRON_DISABLE_SECURITY_WARNINGS=true\n\
 \n\
 # Start D-Bus session\n\
 eval \$(dbus-launch --sh-syntax --exit-with-session)\n\
