@@ -1,11 +1,14 @@
-# Compile
-
+# Step 1: Compile
 ```
-verilator --binary --trace design.sv testbench.sv --top test
+docker run --rm -v ${PWD}:/work -w /work verilator/verilator:latest --binary --trace design.sv testbench.sv --top test
 ```
 
-# Run the executable
-
+# Step 2: Execute
 ```
-./obj_dir/Vtest
+docker run --rm -v ${PWD}:/work -w /work --entrypoint ./obj_dir/Vtest verilator/verilator:latest
+```
+
+# Use Docker Compose
+```
+docker-compose run --rm verilator-run
 ```
