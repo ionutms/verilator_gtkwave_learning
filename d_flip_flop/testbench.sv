@@ -30,6 +30,11 @@ module test;
     clk = 1;
     display;
 
+    for (int i = 0; i < 10; i++) begin
+      clk = ~clk; // Toggle clock
+      display; // Display current state
+      end
+
   end
   
   task display;
