@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  verilator:
+    image: verilator/verilator:latest
+    volumes:
+      - .:/work
+      - verilator_cache:/tmp/verilator_cache  # Optional: cache for faster builds
+    working_dir: /work
+    # Override entrypoint to use bash for multi-command execution
+    entrypoint: /bin/bash
+    # Keep container running for interactive use
+    stdin_open: true
+    tty: true
+    environment:
+      - VERILATOR_ROOT=/usr/local/share/verilator
+
+  # Separate service for compilation only
+  verilator-compile:
+    image: verilator/verilator:latest
+    volumes:
+      - .:/work
+    working_dir: /work
+    command: --binary --trace design.sv testbench.sv --top test
+
+  # Separate service for execution only  
+  verilator-run:
+    image: verilator/verilator:latest
+    volumes:
+      - .:/work
+    working_dir: /work
+    entrypoint: ./obj_dir/Vtest
+    depends_on:
+      - verilator-compile
+
+volumes:
+  verilator_cache:
