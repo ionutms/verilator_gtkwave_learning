@@ -12,6 +12,8 @@ module dff (clk, reset,
 
   assign qb = ~q;
 
+  initial $display("Hello");
+  
   always @(posedge clk or posedge reset)
   begin
     if (reset) begin
